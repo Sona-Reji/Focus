@@ -3,7 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'daily_checkin/welcome_screen.dart';
 import '../theme_service.dart';
 import 'registration_page/registration.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+//import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
