@@ -15,7 +15,7 @@ class _MoodScreenState extends State<MoodScreen> {
     {'emoji': '😄', 'label': 'Great', 'color': Color(0xFF6BCB77)},
     {'emoji': '🙂', 'label': 'Good', 'color': Color(0xFF4D96FF)},
     {'emoji': '😐', 'label': 'Okay', 'color': Color(0xFFFFD93D)},
-    {'emoji': '😞', 'label': 'Bad', 'color': Color(0xFFFF6B6B)},
+    {'emoji': '😞', 'label': 'Bad', 'color': Color.fromARGB(255, 251, 138, 1)},
     {'emoji': '😫', 'label': 'Awful', 'color': Color(0xFFEE5A6F)},
   ];
 

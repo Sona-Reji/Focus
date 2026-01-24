@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import 'home_screen.dart';
 import 'daily_checkin/welcome_screen.dart';
-import 'registration_page/registration.dart';
+import 'auth/login.dart';
+import 'auth/registration.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -13,95 +15,56 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-  late Animation<double> _scaleAnimation;
-  late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
-    _setupAnimations();
     _decideNextScreen();
-  }
-
-  void _setupAnimations() {
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 1500),
-      vsync: this,
-    );
-
-    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOutBack),
-    );
-
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
-    );
-
-    _animationController.forward();
   }
 
   Future<void> _decideNextScreen() async {
     final prefs = await SharedPreferences.getInstance();
-    final lastDate = prefs.getString('lastCheckInDate');
-    final today = DateTime.now().toString().substring(0, 10);
 
-    // 🔄 Reset daily reward flag if new day
-    if (lastDate != today) {
-      await prefs.setBool('rewardGivenToday', false);
-    }
+    final isRegistered = prefs.getBool('isRegistered') ?? false;
+    final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+    final today = DateTime.now().toString().substring(0, 10);
+    final lastCheckIn = prefs.getString('lastCheckInDate');
 
     await Future.delayed(const Duration(seconds: 2));
     if (!mounted) return;
 
-    final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
-
-    if (!isLoggedIn) {
+    if (!isRegistered) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const RegistrationPage()),
       );
-      return;
-    }
-
-    if (lastDate == today) {
+    } else if (!isLoggedIn) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
+        MaterialPageRoute(builder: (_) => const LoginPage()),
+      );
+    } else if (lastCheckIn != today) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const WelcomeScreen()),
       );
     } else {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return const Scaffold(
       body: Center(
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: ScaleTransition(
-            scale: _scaleAnimation,
-            child: const Text(
-              'FOCUS',
-              style: TextStyle(
-                fontSize: 40,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF6C63FF),
-              ),
-            ),
-          ),
+        child: Text(
+          'FOCUS',
+          style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
         ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
   }
 }

@@ -1,8 +1,8 @@
+
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../home_screen.dart';
 import 'login.dart';
 
 class RegistrationPage extends StatefulWidget {
@@ -63,7 +63,9 @@ class _RegistrationPageState extends State<RegistrationPage> {
       await prefs.setInt('age', int.parse(_ageController.text.trim()));
       await prefs.setString('email', _emailController.text.trim());
       await prefs.setString('password', _passwordController.text);
-      await prefs.setBool('isLoggedIn', true);
+
+      await prefs.setBool('isRegistered', true);
+      await prefs.setBool('isLoggedIn', false);
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Registration successful')),
@@ -71,7 +73,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
+        MaterialPageRoute(builder: (_) => const LoginPage()),
       );
     }
   }
@@ -82,7 +84,6 @@ class _RegistrationPageState extends State<RegistrationPage> {
       backgroundColor: Colors.transparent,
       body: Stack(
         children: [
-          // Background gradient + decorative circles
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -116,7 +117,6 @@ class _RegistrationPageState extends State<RegistrationPage> {
               ),
             ),
           ),
-          // Center glass card
           Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),

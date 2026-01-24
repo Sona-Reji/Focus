@@ -55,22 +55,8 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Container(
-                          width: 120,
-                          height: 120,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.15),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.waving_hand,
-                            size: 60,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 32),
                         const Text(
-                          'Welcome back! 👋',
+                          'Welcome back!',
                           style: TextStyle(
                             fontSize: 32,
                             fontWeight: FontWeight.bold,
@@ -82,7 +68,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 30),
                           child: Text(
-                            'How are you feeling today? Let\'s start your daily check-in and earn 100 coins!',
+                            'How are you feeling today? Let\'s start your daily check-in and earn 10 coins!',
                             style: TextStyle(
                               fontSize: 16,
                               color: Colors.white.withOpacity(0.9),

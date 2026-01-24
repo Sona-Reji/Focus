@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'registration_page/registration.dart';
+import 'auth/registration.dart';
+
 import 'journaling/journal_entry_screen.dart';
 import 'journaling/journal_list_screen.dart';
 

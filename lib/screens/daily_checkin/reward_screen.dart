@@ -3,8 +3,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../home_screen.dart';
 
 class RewardScreen extends StatefulWidget {
-  final int coinsEarned;
-  const RewardScreen({super.key, this.coinsEarned = 100});
+  final bool messageViewed;
+  const RewardScreen({super.key, required this.messageViewed});
 
   @override
   State<RewardScreen> createState() => _RewardScreenState();
@@ -13,38 +13,32 @@ class RewardScreen extends StatefulWidget {
 class _RewardScreenState extends State<RewardScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  late Animation<double> _scale;
 
   @override
   void initState() {
     super.initState();
+
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 900),
-    );
+    )..forward();
 
-    _scale = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.elasticOut,
-    );
-
-    _controller.forward();
     _giveReward();
   }
 
   Future<void> _giveReward() async {
     final prefs = await SharedPreferences.getInstance();
-
-    final alreadyRewarded =
-        prefs.getBool('rewardGivenToday') ?? false;
-    if (alreadyRewarded) return;
-
     final today = DateTime.now().toString().substring(0, 10);
-    final currentCoins = prefs.getInt('coins') ?? 0;
+    final rewardKey = 'daily_reward_$today';
 
-    await prefs.setInt('coins', currentCoins + widget.coinsEarned);
-    await prefs.setString('lastCheckInDate', today);
-    await prefs.setBool('rewardGivenToday', true);
+    final alreadyRewarded = prefs.getBool(rewardKey) ?? false;
+
+    if (!alreadyRewarded && widget.messageViewed) {
+      final coins = prefs.getInt('coins') ?? 0;
+      await prefs.setInt('coins', coins + 10);
+      await prefs.setString('lastCheckInDate', today);
+      await prefs.setBool(rewardKey, true);
+    }
 
     await Future.delayed(const Duration(seconds: 2));
     if (!mounted) return;
@@ -64,44 +58,27 @@ class _RewardScreenState extends State<RewardScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Color(0xFFFFD93D),
-              Color(0xFFFF6B6B),
+      body: Center(
+        child: ScaleTransition(
+          scale: _controller,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              Icon(Icons.stars, size: 90, color: Colors.orange),
+              SizedBox(height: 16),
+              Text(
+                '+10 Coins',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 6),
+              Text(
+                'Daily focus reward 🎉',
+                style: TextStyle(color: Colors.grey),
+              ),
             ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: Center(
-          child: ScaleTransition(
-            scale: _scale,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.stars,
-                  size: 90,
-                  color: Colors.white,
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  '+${widget.coinsEarned} Coins',
-                  style: const TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Daily Check-In Complete 🎉',
-                  style: TextStyle(color: Colors.white70),
-                ),
-              ],
-            ),
           ),
         ),
       ),
