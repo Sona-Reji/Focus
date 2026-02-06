@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import '../home_screen.dart';
 
 class RewardScreen extends StatefulWidget {
@@ -14,6 +15,10 @@ class _RewardScreenState extends State<RewardScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
+  final uid = FirebaseAuth.instance.currentUser!.uid;
+  final DatabaseReference userRef =
+      FirebaseDatabase.instance.ref("users");
+
   @override
   void initState() {
     super.initState();
@@ -27,17 +32,25 @@ class _RewardScreenState extends State<RewardScreen>
   }
 
   Future<void> _giveReward() async {
-    final prefs = await SharedPreferences.getInstance();
     final today = DateTime.now().toString().substring(0, 10);
-    final rewardKey = 'daily_reward_$today';
+    final snapshot = await userRef.child(uid).get();
 
-    final alreadyRewarded = prefs.getBool(rewardKey) ?? false;
+    int coins = snapshot.child("coins").value as int? ?? 0;
+    String? lastRewardDate =
+        snapshot.child("lastRewardDate").value as String?;
 
-    if (!alreadyRewarded && widget.messageViewed) {
-      final coins = prefs.getInt('coins') ?? 0;
-      await prefs.setInt('coins', coins + 10);
-      await prefs.setString('lastCheckInDate', today);
-      await prefs.setBool(rewardKey, true);
+    // ✅ only once per day
+    if (lastRewardDate != today) {
+      coins += 10;
+
+      await userRef.child(uid).update({
+        "coins": coins,
+        "lastRewardDate": today,
+      });
+
+      print("✅ Reward added: $coins");
+    } else {
+      print("❌ Already rewarded today");
     }
 
     await Future.delayed(const Duration(seconds: 2));
@@ -57,28 +70,28 @@ class _RewardScreenState extends State<RewardScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: ScaleTransition(
-          scale: _controller,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: const [
-              Icon(Icons.stars, size: 90, color: Colors.orange),
-              SizedBox(height: 16),
-              Text(
-                '+10 Coins',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
+    return WillPopScope(
+      onWillPop: () async => false,
+      child: Scaffold(
+        body: Center(
+          child: ScaleTransition(
+            scale: _controller,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: const [
+                Icon(Icons.stars, size: 90, color: Colors.orange),
+                SizedBox(height: 16),
+                Text(
+                  '+10 Coins',
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                 ),
-              ),
-              SizedBox(height: 6),
-              Text(
-                'Daily focus reward 🎉',
-                style: TextStyle(color: Colors.grey),
-              ),
-            ],
+                SizedBox(height: 6),
+                Text(
+                  'Daily focus reward 🎉',
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ],
+            ),
           ),
         ),
       ),

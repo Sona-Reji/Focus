@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 
 import 'home_screen.dart';
 import 'daily_checkin/welcome_screen.dart';
-import 'auth/login.dart';
 import 'auth/registration.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -13,47 +13,50 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
-    with SingleTickerProviderStateMixin {
-
-  @override
-  void initState() {
-    super.initState();
-    _decideNextScreen();
-  }
+class _SplashScreenState extends State<SplashScreen> {
 
   Future<void> _decideNextScreen() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    final isRegistered = prefs.getBool('isRegistered') ?? false;
-    final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
-    final today = DateTime.now().toString().substring(0, 10);
-    final lastCheckIn = prefs.getString('lastCheckInDate');
+    final user = FirebaseAuth.instance.currentUser;
 
     await Future.delayed(const Duration(seconds: 2));
     if (!mounted) return;
 
-    if (!isRegistered) {
+    // 🔴 Not logged in
+    if (user == null) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const RegistrationPage()),
       );
-    } else if (!isLoggedIn) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const LoginPage()),
-      );
-    } else if (lastCheckIn != today) {
+      return;
+    }
+
+    final uid = user.uid;
+    final userRef = FirebaseDatabase.instance.ref("users/$uid");
+    final snapshot = await userRef.get();
+
+    final today = DateTime.now().toString().substring(0, 10);
+    final lastCheckIn = snapshot.child("lastCheckInDate").value as String?;
+
+    // 🟡 Not checked in today
+    if (lastCheckIn != today) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const WelcomeScreen()),
       );
-    } else {
+    }
+    // 🟢 Already checked in today
+    else {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const HomeScreen()),
       );
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _decideNextScreen();
   }
 
   @override

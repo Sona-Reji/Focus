@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 
 import 'daily_checkin/welcome_screen.dart';
 import 'profile_screen.dart';
@@ -8,6 +9,7 @@ import 'calendar_full_screen.dart';
 import 'new_goal_screen.dart';
 import 'important_days_screen.dart';
 import 'journaling/journal_entry_screen.dart';
+import 'journaling/journal_list_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -20,38 +22,57 @@ class _HomeScreenState extends State<HomeScreen> {
   int coins = 0;
   bool checkedInToday = false;
 
+  late final String uid;
+  late final DatabaseReference userRef;
+
   @override
   void initState() {
     super.initState();
-    _loadData();
+    uid = FirebaseAuth.instance.currentUser!.uid;
+    userRef = FirebaseDatabase.instance.ref("users");
+    _listenUserData();
   }
 
-  Future<void> _loadData() async {
-    final prefs = await SharedPreferences.getInstance();
-    final today = DateTime.now().toString().substring(0, 10);
+  void _listenUserData() {
+    userRef.child(uid).onValue.listen((event) {
+      final data = event.snapshot.value as Map?;
 
-    setState(() {
-      coins = prefs.getInt('coins') ?? 0;
-      checkedInToday = prefs.getString('lastCheckInDate') == today;
+      if (data == null) return;
+
+      final today = DateTime.now().toString().substring(0, 10);
+
+      setState(() {
+        coins = data["coins"] ?? 0;
+        checkedInToday = data["lastCheckInDate"] == today;
+      });
     });
   }
 
   Future<void> _startCheckIn() async {
+    if (checkedInToday) return;
+
     await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const WelcomeScreen()),
     );
-    _loadData();
   }
 
   Future<void> _openJournal() async {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => const JournalEntryScreen(mood: 'Okay'),
+        builder: (_) => const JournalEntryScreen(),
       ),
     );
-    _loadData();
+  }
+
+  Future<void> _openJournalHistory() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const JournalListScreen(),
+      ),
+    );
   }
 
   @override
@@ -83,10 +104,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         SizedBox(width: 12),
                         Text(
                           'Good to see you! 👋',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
@@ -121,25 +139,21 @@ class _HomeScreenState extends State<HomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Daily Check‑In',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      'Daily Check-In',
+                      style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       checkedInToday
                           ? 'You already checked in today 🎉'
-                          : 'Complete check‑in to earn coins',
+                          : 'Complete check-in to earn coins',
                       style: const TextStyle(color: Colors.white),
                     ),
                     const SizedBox(height: 12),
                     if (!checkedInToday)
                       ElevatedButton(
                         onPressed: _startCheckIn,
-                        child: const Text('Start Check‑In'),
+                        child: const Text('Start Check-In'),
                       ),
                   ],
                 ),
@@ -147,19 +161,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
               const SizedBox(height: 30),
 
-              const Text(
-                'Quick Actions',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
+              const Text('Quick Actions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
 
-              /// 🟢 JOURNAL (Unlocked after check‑in)
               _buildActionCard(
                 icon: Icons.book,
                 title: 'Daily Journal',
-                subtitle: checkedInToday
-                    ? 'Write about your thoughts'
-                    : 'Complete check‑in first',
+                subtitle: checkedInToday ? 'Write about your thoughts' : 'Complete check-in first',
                 enabled: checkedInToday,
                 color: const Color(0xFF6C63FF),
                 onTap: _openJournal,
@@ -168,11 +176,11 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 12),
 
               _buildActionCard(
-                icon: Icons.trending_up,
-                title: 'Your Progress',
-                subtitle: 'Coming soon',
-                color: const Color(0xFF00D4FF),
-                onTap: () {},
+                icon: Icons.history,
+                title: 'Journal History',
+                subtitle: 'Review your past reflections',
+                color: const Color(0xFF4D96FF),
+                onTap: _openJournalHistory,
               ),
 
               const SizedBox(height: 12),
@@ -183,10 +191,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 subtitle: 'Customize your experience',
                 color: const Color(0xFFFF6B6B),
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const SettingsScreen()),
-                  );
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
                 },
               ),
             ],
@@ -194,7 +199,6 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
 
-      /// BOTTOM NAV
       bottomNavigationBar: Row(
         children: [
           _bottomItem(Icons.calendar_today, 'Calendar',
@@ -223,7 +227,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// ✅ FIXED ACTION CARD (NOW SUPPORTS `enabled`)
   Widget _buildActionCard({
     required IconData icon,
     required String title,

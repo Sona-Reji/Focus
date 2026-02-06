@@ -1,8 +1,8 @@
-
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'login.dart';
 
 class RegistrationPage extends StatefulWidget {
@@ -14,11 +14,16 @@ class RegistrationPage extends StatefulWidget {
 
 class _RegistrationPageState extends State<RegistrationPage> {
   final _formKey = GlobalKey<FormState>();
+
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _ageController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmController = TextEditingController();
+
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final DatabaseReference _dbRef =
+      FirebaseDatabase.instance.ref().child("users");
 
   @override
   void dispose() {
@@ -57,23 +62,39 @@ class _RegistrationPageState extends State<RegistrationPage> {
   }
 
   Future<void> _submit() async {
-    if (_formKey.currentState?.validate() ?? false) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('username', _usernameController.text.trim());
-      await prefs.setInt('age', int.parse(_ageController.text.trim()));
-      await prefs.setString('email', _emailController.text.trim());
-      await prefs.setString('password', _passwordController.text);
+    if (!(_formKey.currentState?.validate() ?? false)) return;
 
-      await prefs.setBool('isRegistered', true);
-      await prefs.setBool('isLoggedIn', false);
+    try {
+      // 🔹 Create user in Firebase Auth
+      UserCredential userCredential =
+          await _auth.createUserWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+
+      final uid = userCredential.user!.uid;
+
+      // 🔹 Store user in Realtime Database
+      await _dbRef.child(uid).set({
+        "username": _usernameController.text.trim(),
+        "age": int.parse(_ageController.text.trim()),
+        "email": _emailController.text.trim(),
+        "coins": 0,
+        "createdAt": DateTime.now().toIso8601String(),
+      });
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Registration successful')),
       );
 
+      // 🔹 Go to Login
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const LoginPage()),
+      );
+    } on FirebaseAuthException catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message ?? "Registration failed")),
       );
     }
   }
@@ -90,30 +111,6 @@ class _RegistrationPageState extends State<RegistrationPage> {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [Color(0xFF8B78FF), Color(0xFF6C63FF), Color(0xFF00D4FF)],
-              ),
-            ),
-          ),
-          Positioned(
-            top: -60,
-            left: -60,
-            child: Container(
-              width: 180,
-              height: 180,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.06),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: -80,
-            right: -40,
-            child: Container(
-              width: 220,
-              height: 220,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.05),
-                shape: BoxShape.circle,
               ),
             ),
           ),
@@ -148,7 +145,6 @@ class _RegistrationPageState extends State<RegistrationPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            const SizedBox(height: 6),
                             const Text(
                               'Create Account',
                               textAlign: TextAlign.center,
@@ -158,49 +154,34 @@ class _RegistrationPageState extends State<RegistrationPage> {
                                 color: Colors.white,
                               ),
                             ),
-                            const SizedBox(height: 8),
-                            const Text(
-                              'Join FOCUS to track your daily progress',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(color: Colors.white70),
-                            ),
                             const SizedBox(height: 20),
-                            _buildTextField(controller: _usernameController, label: 'Username'),
+                            _buildTextField(
+                                controller: _usernameController,
+                                label: 'Username'),
                             const SizedBox(height: 12),
-                            _buildTextField(controller: _ageController, label: 'Age', keyboardType: TextInputType.number),
+                            _buildTextField(
+                                controller: _ageController,
+                                label: 'Age',
+                                keyboardType: TextInputType.number),
                             const SizedBox(height: 12),
-                            _buildTextField(controller: _emailController, label: 'Email', keyboardType: TextInputType.emailAddress),
+                            _buildTextField(
+                                controller: _emailController,
+                                label: 'Email',
+                                keyboardType: TextInputType.emailAddress),
                             const SizedBox(height: 12),
-                            _buildTextField(controller: _passwordController, label: 'Password', obscureText: true),
+                            _buildTextField(
+                                controller: _passwordController,
+                                label: 'Password',
+                                obscureText: true),
                             const SizedBox(height: 12),
-                            _buildTextField(controller: _confirmController, label: 'Confirm Password', obscureText: true),
+                            _buildTextField(
+                                controller: _confirmController,
+                                label: 'Confirm Password',
+                                obscureText: true),
                             const SizedBox(height: 18),
                             ElevatedButton(
                               onPressed: _submit,
-                              style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                                backgroundColor: Colors.white,
-                                foregroundColor: const Color(0xFF6C63FF),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                elevation: 0,
-                              ),
-                              child: const Text('Register', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                            ),
-                            const SizedBox(height: 12),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Text('Already have an account?', style: TextStyle(color: Colors.white70)),
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.pushReplacement(
-                                      context,
-                                      MaterialPageRoute(builder: (_) => const LoginPage()),
-                                    );
-                                  },
-                                  child: const Text('Login', style: TextStyle(color: Colors.white)),
-                                ),
-                              ],
+                              child: const Text("Register"),
                             ),
                           ],
                         ),
@@ -229,22 +210,15 @@ class _RegistrationPageState extends State<RegistrationPage> {
       style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(color: Colors.white.withOpacity(0.9)),
         filled: true,
         fillColor: Colors.white.withOpacity(0.04),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.white.withOpacity(0.06)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.white.withOpacity(0.14)),
-        ),
-        errorStyle: const TextStyle(color: Colors.orangeAccent),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       ),
       validator: (v) {
-        if (label == 'Username') return v == null || v.trim().isEmpty ? 'Username is required' : null;
+        if (label == 'Username') {
+          return v == null || v.trim().isEmpty
+              ? 'Username is required'
+              : null;
+        }
         if (label == 'Age') return _validateAge(v);
         if (label == 'Email') return _validateEmail(v);
         if (label == 'Password') return _validatePassword(v);

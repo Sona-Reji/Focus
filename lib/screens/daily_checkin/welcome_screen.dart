@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'mood_screen.dart';
 
 class WelcomeScreen extends StatefulWidget {
@@ -95,7 +96,13 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    onPressed: () {
+                    onPressed: () async {
+                      // Mark check-in as started for today
+                      final prefs = await SharedPreferences.getInstance();
+                      final today = DateTime.now().toString().substring(0, 10);
+                      await prefs.setString('lastCheckInDate', today);
+                      
+                      if (!context.mounted) return;
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => const MoodScreen()),

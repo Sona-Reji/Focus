@@ -1,12 +1,10 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import 'registration.dart';
 import '../daily_checkin/welcome_screen.dart';
-import '../home_screen.dart';   // ✅ FIXED PATH
-
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -19,6 +17,8 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   @override
   void dispose() {
@@ -34,26 +34,23 @@ class _LoginPageState extends State<LoginPage> {
     return null;
   }
 
-  // ✅ ONLY WORKFLOW FIX IS HERE
   Future<void> _login() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    final prefs = await SharedPreferences.getInstance();
-    final storedEmail = prefs.getString('email');
-    final storedPassword = prefs.getString('password');
+    try {
+      await _auth.signInWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
 
-    if (_emailController.text.trim() == storedEmail &&
-        _passwordController.text == storedPassword) {
-      await prefs.setBool('isLoggedIn', true);
-
-      // 🔴 GO TO CHECK-IN (NOT HOME)
+      // ✅ After login → go to daily check-in
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const WelcomeScreen()),
       );
-    } else {
+    } on FirebaseAuthException catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Invalid credentials')),
+        SnackBar(content: Text(e.message ?? "Login failed")),
       );
     }
   }
@@ -64,7 +61,7 @@ class _LoginPageState extends State<LoginPage> {
       backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text('Login'),
-        backgroundColor: const Color(0xFF6BCB77),
+        backgroundColor: const Color(0xFF6C63FF),
         elevation: 0,
       ),
       body: Stack(
@@ -74,42 +71,13 @@ class _LoginPageState extends State<LoginPage> {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFFB8F2D3),
-                  Color(0xFF6BCB77),
-                  Color(0xFF00C897),
-                ],
-              ),
-            ),
-          ),
-          Positioned(
-            top: -60,
-            right: -50,
-            child: Container(
-              width: 160,
-              height: 160,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.06),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: -80,
-            left: -40,
-            child: Container(
-              width: 220,
-              height: 220,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.05),
-                shape: BoxShape.circle,
+                colors: [Color(0xFF8B78FF), Color(0xFF6C63FF), Color(0xFF00D4FF)],
               ),
             ),
           ),
           Center(
             child: SingleChildScrollView(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 480),
                 child: ClipRRect(
@@ -121,8 +89,7 @@ class _LoginPageState extends State<LoginPage> {
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.10),
                         borderRadius: BorderRadius.circular(18),
-                        border:
-                            Border.all(color: Colors.white.withOpacity(0.16)),
+                        border: Border.all(color: Colors.white.withOpacity(0.16)),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.12),
@@ -136,7 +103,6 @@ class _LoginPageState extends State<LoginPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            const SizedBox(height: 6),
                             const Text(
                               'Welcome Back',
                               textAlign: TextAlign.center,
@@ -145,12 +111,6 @@ class _LoginPageState extends State<LoginPage> {
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
                               ),
-                            ),
-                            const SizedBox(height: 6),
-                            const Text(
-                              'Sign in to continue',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(color: Colors.white70),
                             ),
                             const SizedBox(height: 18),
                             _buildTextField(
@@ -167,21 +127,7 @@ class _LoginPageState extends State<LoginPage> {
                             const SizedBox(height: 18),
                             ElevatedButton(
                               onPressed: _login,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white,
-                                foregroundColor: const Color(0xFF0F6B3A),
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 14),
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12)),
-                                elevation: 0,
-                              ),
-                              child: const Text(
-                                'Login',
-                                style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600),
-                              ),
+                              child: const Text("Login"),
                             ),
                             const SizedBox(height: 12),
                             Row(
@@ -196,8 +142,9 @@ class _LoginPageState extends State<LoginPage> {
                                     Navigator.pushReplacement(
                                       context,
                                       MaterialPageRoute(
-                                          builder: (_) =>
-                                              const RegistrationPage()),
+                                        builder: (_) =>
+                                            const RegistrationPage(),
+                                      ),
                                     );
                                   },
                                   child: const Text(
@@ -234,20 +181,8 @@ class _LoginPageState extends State<LoginPage> {
       style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(color: Colors.white.withOpacity(0.9)),
         filled: true,
         fillColor: Colors.white.withOpacity(0.04),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.white.withOpacity(0.06)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.white.withOpacity(0.14)),
-        ),
-        errorStyle: const TextStyle(color: Colors.orangeAccent),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       ),
       validator: (v) {
         if (label == 'Email') return _validateEmail(v);

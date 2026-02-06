@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
+
 import 'daily_checkin/welcome_screen.dart';
 import '../theme_service.dart';
 import 'auth/registration.dart';
-
-//import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -14,7 +14,7 @@ class SettingsScreen extends StatelessWidget {
       context: context,
       builder: (c) => AlertDialog(
         title: const Text('Reset progress'),
-        content: const Text('This will reset your daily check-in state and coins. Continue?'),
+        content: const Text('This will reset your coins and daily check-in. Continue?'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Cancel')),
           TextButton(onPressed: () => Navigator.pop(c, true), child: const Text('Reset')),
@@ -24,12 +24,18 @@ class SettingsScreen extends StatelessWidget {
 
     if (confirm != true) return;
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('coins', 0);
-    await prefs.remove('lastCheckInDate');
-    await prefs.setBool('rewardGivenToday', false);
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final DatabaseReference userRef =
+        FirebaseDatabase.instance.ref("users").child(uid);
+
+    // 🔴 RESET DATA IN FIREBASE
+    await userRef.update({
+      "coins": 0,
+      "lastCheckInDate": "",
+    });
 
     if (!context.mounted) return;
+
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (_) => const WelcomeScreen()),
@@ -37,66 +43,59 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
+  Future<void> _logout(BuildContext context) async {
+    await FirebaseAuth.instance.signOut();
+
+    if (!context.mounted) return;
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const RegistrationPage()),
+      (route) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Settings'),
-        backgroundColor: const Color(0xFF6C63FF),
-      ),
+      appBar: AppBar(title: const Text('Settings'), backgroundColor: const Color(0xFF6C63FF)),
       body: ListView(
         children: [
           const SizedBox(height: 12),
+
+          /// 🌗 THEME
           Card(
-            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             child: ListTile(
               leading: const Icon(Icons.brightness_6),
               title: const Text('Theme'),
-              subtitle: const Text('Switch between light and dark'),
               trailing: ValueListenableBuilder(
                 valueListenable: ThemeService.themeModeNotifier,
                 builder: (context, ThemeMode mode, _) {
                   final isDark = mode == ThemeMode.dark;
-                  return Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(isDark ? Icons.nights_stay : Icons.wb_sunny, color: isDark ? Colors.amber : Colors.orange),
-                      const SizedBox(width: 8),
-                      Switch(
-                        value: isDark,
-                        onChanged: (v) => ThemeService.setDarkMode(v),
-                      ),
-                    ],
+                  return Switch(
+                    value: isDark,
+                    onChanged: (v) => ThemeService.setDarkMode(v),
                   );
                 },
               ),
             ),
           ),
+
+          /// 🔄 RESET
           Card(
-            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             child: ListTile(
               leading: const Icon(Icons.refresh),
               title: const Text('Reset progress'),
-              subtitle: const Text('Clear coins and restart daily check-in'),
               onTap: () => _confirmAndReset(context),
             ),
           ),
+
+          /// 🚪 LOGOUT
           Card(
-            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             child: ListTile(
               leading: const Icon(Icons.logout),
               title: const Text('Logout'),
-              subtitle: const Text('Sign out and return to registration'),
-              onTap: () async {
-                final prefs = await SharedPreferences.getInstance();
-                await prefs.setBool('isLoggedIn', false);
-                if (!context.mounted) return;
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (_) => const RegistrationPage()),
-                  (route) => false,
-                );
-              },
+              onTap: () => _logout(context),
             ),
           ),
         ],

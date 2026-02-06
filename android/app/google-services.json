@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "330068600929",
+    "firebase_url": "https://focus-d65bf-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "focus-d65bf",
+    "storage_bucket": "focus-d65bf.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:330068600929:android:caddbcfa0ce6fd7b1fe220",
+        "android_client_info": {
+          "package_name": "com.example.daily_checkin"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCAe8BN1RS5GTfeYgL-JtJAHIgyXgz3AcM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
