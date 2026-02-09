@@ -1,9 +1,8 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'login.dart';
+import 'otp_verification_screen.dart';
 
 class RegistrationPage extends StatefulWidget {
   const RegistrationPage({super.key});
@@ -18,10 +17,8 @@ class _RegistrationPageState extends State<RegistrationPage> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _ageController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmController = TextEditingController();
+  bool _isLoading = false;
 
-  final FirebaseAuth _auth = FirebaseAuth.instance;
   final DatabaseReference _dbRef =
       FirebaseDatabase.instance.ref().child("users");
 
@@ -30,8 +27,6 @@ class _RegistrationPageState extends State<RegistrationPage> {
     _usernameController.dispose();
     _ageController.dispose();
     _emailController.dispose();
-    _passwordController.dispose();
-    _confirmController.dispose();
     super.dispose();
   }
 
@@ -49,69 +44,96 @@ class _RegistrationPageState extends State<RegistrationPage> {
     return null;
   }
 
-  String? _validatePassword(String? value) {
-    if (value == null || value.isEmpty) return 'Password is required';
-    if (value.length < 6) return 'Password must be at least 6 characters';
+  String? _validateUsername(String? value) {
+    if (value == null || value.trim().isEmpty) return 'Username is required';
+    if (value.trim().length < 3) return 'Username must be at least 3 characters';
     return null;
   }
 
-  String? _validateConfirm(String? value) {
-    if (value == null || value.isEmpty) return 'Confirm your password';
-    if (value != _passwordController.text) return 'Passwords do not match';
-    return null;
-  }
-
-  Future<void> _submit() async {
+  Future<void> _register() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
+    setState(() => _isLoading = true);
+
     try {
-      // 🔹 Create user in Firebase Auth
-      UserCredential userCredential =
-          await _auth.createUserWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-      );
+      final email = _emailController.text.trim();
 
-      final uid = userCredential.user!.uid;
+      // Check if email already exists by fetching all users
+      final snapshot = await _dbRef.get();
+      if (snapshot.exists) {
+        final users = Map<String, dynamic>.from(snapshot.value as Map);
+        for (var user in users.values) {
+          if (user is Map && user['email'] == email) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Email already registered')),
+            );
+            setState(() => _isLoading = false);
+            return;
+          }
+        }
+      }
 
-      // 🔹 Store user in Realtime Database
-      await _dbRef.child(uid).set({
+      // Create user document with temporary ID
+      final newUserRef = _dbRef.push();
+      final uid = newUserRef.key ?? '';
+
+      // Store user data
+      await newUserRef.set({
         "username": _usernameController.text.trim(),
         "age": int.parse(_ageController.text.trim()),
-        "email": _emailController.text.trim(),
+        "email": email,
         "coins": 0,
         "createdAt": DateTime.now().toIso8601String(),
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Registration successful')),
-      );
+      // Generate OTP
+      final otp = (100000 + (DateTime.now().millisecondsSinceEpoch % 900000))
+          .toString()
+          .substring(1);
 
-      // 🔹 Go to Login
+      // Save OTP
+      await FirebaseDatabase.instance.ref("otps").child(uid).set({
+        "otp": otp,
+        "email": email,
+        "createdAt": DateTime.now().toIso8601String(),
+      });
+
+      // For testing: Display OTP in console and show to user
+      print('=== OTP for $email ===');
+      print('OTP Code: $otp');
+      print('=== Copy this code to verify ===');
+
+      if (!mounted) return;
+
+      // Navigate to OTP verification
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const LoginPage()),
+        MaterialPageRoute(
+          builder: (_) => OtpVerificationScreen(
+            email: email,
+            generatedOtp: otp,
+            uid: uid,
+          ),
+        ),
       );
-    } on FirebaseAuthException catch (e) {
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message ?? "Registration failed")),
+        SnackBar(content: Text('Error: ${e.toString()}')),
       );
     }
+
+    setState(() => _isLoading = false);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: const Color(0xFFF7F9FA),
       body: Stack(
         children: [
           Container(
             decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF8B78FF), Color(0xFF6C63FF), Color(0xFF00D4FF)],
-              ),
+              color: Color(0xFFF7F9FA),
             ),
           ),
           Center(
@@ -126,10 +148,10 @@ class _RegistrationPageState extends State<RegistrationPage> {
                     child: Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.12),
+                        color: const Color(0xFFFFFFFF),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: Colors.white.withOpacity(0.18),
+                          color: const Color(0xFFE0E0E0),
                           width: 1,
                         ),
                         boxShadow: [
@@ -151,7 +173,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                               style: TextStyle(
                                 fontSize: 26,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                                color: Color(0xFF1E2A32),
                               ),
                             ),
                             const SizedBox(height: 20),
@@ -168,20 +190,27 @@ class _RegistrationPageState extends State<RegistrationPage> {
                                 controller: _emailController,
                                 label: 'Email',
                                 keyboardType: TextInputType.emailAddress),
-                            const SizedBox(height: 12),
-                            _buildTextField(
-                                controller: _passwordController,
-                                label: 'Password',
-                                obscureText: true),
-                            const SizedBox(height: 12),
-                            _buildTextField(
-                                controller: _confirmController,
-                                label: 'Confirm Password',
-                                obscureText: true),
                             const SizedBox(height: 18),
                             ElevatedButton(
-                              onPressed: _submit,
-                              child: const Text("Register"),
+                              onPressed: _isLoading ? null : _register,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF4A9B8E),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                              ),
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                          Colors.white,
+                                        ),
+                                      ),
+                                    )
+                                  : const Text("Register"),
                             ),
                           ],
                         ),
@@ -207,22 +236,25 @@ class _RegistrationPageState extends State<RegistrationPage> {
       controller: controller,
       obscureText: obscureText,
       keyboardType: keyboardType,
-      style: const TextStyle(color: Colors.white),
+      style: const TextStyle(color: Color(0xFF1E2A32)),
       decoration: InputDecoration(
         labelText: label,
+        labelStyle: const TextStyle(color: Color(0xFF7A7A7A)),
         filled: true,
-        fillColor: Colors.white.withOpacity(0.04),
+        fillColor: const Color(0xFFFAFAFA),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Color(0xFF4A9B8E), width: 1.5),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Color(0xFF4A9B8E), width: 2),
+        ),
       ),
       validator: (v) {
-        if (label == 'Username') {
-          return v == null || v.trim().isEmpty
-              ? 'Username is required'
-              : null;
-        }
+        if (label == 'Username') return _validateUsername(v);
         if (label == 'Age') return _validateAge(v);
         if (label == 'Email') return _validateEmail(v);
-        if (label == 'Password') return _validatePassword(v);
-        if (label == 'Confirm Password') return _validateConfirm(v);
         return null;
       },
     );

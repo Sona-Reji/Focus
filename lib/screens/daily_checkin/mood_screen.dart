@@ -92,8 +92,8 @@ class _MoodScreenState extends State<MoodScreen> {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  const Color(0xFF6C63FF).withOpacity(0.05),
-                  const Color(0xFFF5F7FF),
+                  const Color(0xFF4A9B8E).withOpacity(0.05),
+                  const Color(0xFFF7F9FA),
                 ],
               ),
             ),
@@ -166,8 +166,8 @@ class _MoodScreenState extends State<MoodScreen> {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                const Color(0xFF6C63FF).withOpacity(0.05),
-                const Color(0xFFF5F7FF),
+                const Color(0xFF4A9B8E).withOpacity(0.05),
+                const Color(0xFFF7F9FA),
               ],
             ),
           ),

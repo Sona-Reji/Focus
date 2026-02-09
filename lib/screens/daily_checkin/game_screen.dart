@@ -54,7 +54,7 @@ class _GameScreenState extends State<GameScreen> {
     return WillPopScope(
       onWillPop: () async => false,
       child: Scaffold(
-        backgroundColor: const Color(0xFF6C63FF),
+        backgroundColor: const Color(0xFF4A9B8E),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,

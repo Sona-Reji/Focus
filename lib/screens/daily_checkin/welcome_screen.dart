@@ -41,8 +41,8 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              const Color(0xFF6C63FF),
-              const Color(0xFF8B78FF).withOpacity(0.8),
+              const Color(0xFF4A9B8E),
+              const Color(0xFF59ABB8).withOpacity(0.8),
             ],
           ),
         ),
@@ -90,7 +90,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
-                      foregroundColor: const Color(0xFF6C63FF),
+                      foregroundColor: const Color(0xFF4A9B8E),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),

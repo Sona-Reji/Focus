@@ -109,7 +109,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       appBar: AppBar(
         title: const Text('Profile'),
         elevation: 0,
-        backgroundColor: const Color(0xFF6C63FF),
+        backgroundColor: const Color(0xFF4A9B8E),
       ),
       body: loading
           ? const Center(child: CircularProgressIndicator())
@@ -120,7 +120,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Container(
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [Color(0xFF6C63FF), Color(0xFF8B78FF)],
+                        colors: [Color(0xFF4A9B8E), Color(0xFF59ABB8)],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                       ),
@@ -136,8 +136,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             shape: BoxShape.circle,
                             gradient: LinearGradient(
                               colors: [
-                                const Color(0xFF6C63FF).withOpacity(0.3),
-                                const Color(0xFF8B78FF).withOpacity(0.3),
+                              const Color(0xFF4A9B8E).withOpacity(0.3),
+                              const Color(0xFF59ABB8).withOpacity(0.3),
                               ],
                             ),
                             border: Border.all(
@@ -193,7 +193,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           icon: Icons.book,
                           label: 'Journals',
                           value: totalJournals.toString(),
-                          color: const Color(0xFF4D96FF),
+                          color: const Color(0xFFE8836B),
                         ),
                         const SizedBox(width: 12),
                         _buildStatCard(
@@ -224,7 +224,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           icon: Icons.email,
                           label: 'Email',
                           value: email.isNotEmpty ? email : 'Not set',
-                          color: const Color(0xFF4D96FF),
+                          color: const Color(0xFFE8836B),
                         ),
                         const SizedBox(height: 10),
                         _buildInfoCard(
@@ -238,7 +238,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           icon: Icons.account_circle,
                           label: 'Username',
                           value: name.isNotEmpty ? name : 'No username',
-                          color: const Color(0xFF6C63FF),
+                          color: const Color(0xFF4A9B8E),
                         ),
                       ],
                     ),
@@ -260,13 +260,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                         ),
                         onPressed: _logout,
-                        icon: const Icon(Icons.logout, color: Color(0xFF6C63FF)),
+                        icon: const Icon(Icons.logout, color: Color(0xFF4A9B8E)),
                         label: const Text(
                           'Logout',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
-                            color: Color(0xFF6C63FF),
+                            color: Color(0xFF4A9B8E),
                           ),
                         ),
                       ),

@@ -98,24 +98,24 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: const [
                         CircleAvatar(
                           radius: 22,
-                          backgroundColor: Color(0xFF6C63FF),
+                          backgroundColor: Color(0xFF4A9B8E),
                           child: Icon(Icons.person, color: Colors.white),
                         ),
                         SizedBox(width: 12),
                         Text(
                           'Good to see you! 👋',
-                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1E2A32)),
                         ),
                       ],
                     ),
                   ),
                   Chip(
-                    backgroundColor: Colors.amber,
+                    backgroundColor: const Color(0xFFE8836B),
                     label: Row(
                       children: [
-                        const Icon(Icons.stars),
+                        const Icon(Icons.stars, color: Colors.white),
                         const SizedBox(width: 4),
-                        Text('$coins'),
+                        Text('$coins', style: const TextStyle(color: Colors.white)),
                       ],
                     ),
                   ),
@@ -130,8 +130,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: checkedInToday
-                        ? [Colors.green, Colors.teal]
-                        : [const Color(0xFF6C63FF), const Color(0xFF8B78FF)],
+                        ? [const Color(0xFF4A9B8E), const Color(0xFF3A8B7E)]
+                        : [const Color(0xFF4A9B8E), const Color(0xFF59ABB8)],
                   ),
                   borderRadius: BorderRadius.circular(16),
                 ),
@@ -161,7 +161,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
               const SizedBox(height: 30),
 
-              const Text('Quick Actions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const Text('Quick Actions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E2A32))),
               const SizedBox(height: 16),
 
               _buildActionCard(
@@ -169,7 +169,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 title: 'Daily Journal',
                 subtitle: checkedInToday ? 'Write about your thoughts' : 'Complete check-in first',
                 enabled: checkedInToday,
-                color: const Color(0xFF6C63FF),
+                color: const Color(0xFF4A9B8E),
                 onTap: _openJournal,
               ),
 
@@ -179,7 +179,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 icon: Icons.history,
                 title: 'Journal History',
                 subtitle: 'Review your past reflections',
-                color: const Color(0xFF4D96FF),
+                color: const Color(0xFFE8836B),
                 onTap: _openJournalHistory,
               ),
 
@@ -189,7 +189,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 icon: Icons.settings,
                 title: 'Settings',
                 subtitle: 'Customize your experience',
-                color: const Color(0xFFFF6B6B),
+                color: const Color(0xFFE8836B),
                 onTap: () {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
                 },
@@ -219,8 +219,8 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon),
-            Text(label, style: const TextStyle(fontSize: 12)),
+            Icon(icon, color: const Color(0xFF4A9B8E)),
+            Text(label, style: const TextStyle(fontSize: 12, color: Color(0xFF1E2A32))),
           ],
         ),
       ),
@@ -242,7 +242,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: const Color(0xFFF7F9FA),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: color.withOpacity(0.2), width: 2),
           ),

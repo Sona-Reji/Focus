@@ -61,11 +61,16 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
+      backgroundColor: const Color(0xFFF7F9FA),
       body: Center(
         child: Text(
           'FOCUS',
-          style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            fontSize: 40,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF4A9B8E),
+          ),
         ),
       ),
     );
